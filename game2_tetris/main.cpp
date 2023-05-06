@@ -42,6 +42,19 @@ bool check()
    return 1;
 };
 
+void debugWriteToWindow(RenderWindow &window, Text &debugText){
+	Vector2<int> windowPosition = window.getPosition();
+	int absX = windowPosition.x;
+	int absY = windowPosition.y;
+
+	int mouseX = Mouse::getPosition(window).x;
+	int mouseY = Mouse::getPosition(window).y;
+
+	int relativeX = mouseX;
+	int relativeY = mouseY;
+	String mousePos =  to_string(relativeX) + " " + to_string(relativeY);
+	debugText.setString(mousePos);
+};
 
 int main()
 {
@@ -94,20 +107,10 @@ int main()
 			  else if (e.key.code==Keyboard::Right) {dx=1;}
 			}
 
-			// debug
+			// debug events
 			if (e.type == Event::MouseMoved)
 			{
-				Vector2<int> windowPosition = window.getPosition();
-				int absX = windowPosition.x;
-				int absY = windowPosition.y;
-
-				int mouseX = Mouse::getPosition(window).x;
-				int mouseY = Mouse::getPosition(window).y;
-
-				int relativeX = mouseX;
-				int relativeY = mouseY;
-				String mousePos =  to_string(relativeX) + " " + to_string(relativeY);
-				debugText.setString(mousePos);
+				debugWriteToWindow(window, debugText);
 			}
 		}
 
