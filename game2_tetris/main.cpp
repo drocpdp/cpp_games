@@ -3,25 +3,34 @@
 using namespace sf;
 using namespace std;
 
-const int M = 20;
+// uninforced grid limits of playing space
+// M = rows, N = columns
+const int M = 20; 
 const int N = 10;
-
+// field is 2d array representing each square, initiated with 0
 int field[M][N] = {0};
+
+
+/***
+ * 	Point, figures[][], field[][]
+ * 	field[][]
+ * 		-playing field
+ * 	Point[4][4]
+ * 		-occupy-able space of a moving shape
+ * 			(current in play)
+ * 		-4x4 to accomodate rotation
+ * 	figures[7][4]
+ * 		-initially occupy left half of 4x4 Point() space
+		--
+		0 1
+		2 3
+		4 5
+		6 7
+***/
 
 struct Point
 {int x,y;} a[4], b[4];
 
-/* 
-	2 x 4 grid
-	--
-	0 1		1 0
-	2 3 	3 2
-	4 5		5 4
-	6 7		7 6
-
-	0 2 4 6		1 3 5 7
-	1 3 5 7		0 2 4 6
-*/
 int figures[7][4] =
 {
 	1,3,5,7, // I
@@ -41,6 +50,7 @@ bool check()
 
    return 1;
 };
+
 
 void debugWriteToWindow(RenderWindow &window, Text &debugText){
 	Vector2<int> windowPosition = window.getPosition();
@@ -88,6 +98,16 @@ int main()
 	debugText.setFillColor(Color::Black);
 	debugText.setPosition(20,410);	
 
+	///////// ScoreText box ///////////
+	Font scoreFont;
+	scoreFont.loadFromFile("images/Roboto/Roboto-Black.ttf");
+	Text scoreText("",scoreFont);
+	scoreText.setFont(scoreFont);
+	scoreText.setCharacterSize(30);
+	scoreText.setStyle(Text::Bold);
+	scoreText.setFillColor(Color::Black);
+	scoreText.setPosition(200,410);		
+
     while (window.isOpen())
     {
 		float time = clock.getElapsedTime().asSeconds();
@@ -111,6 +131,7 @@ int main()
 			if (e.type == Event::MouseMoved)
 			{
 				debugWriteToWindow(window, debugText);
+				debugWriteToWindow(window, scoreText);
 			}
 		}
 
@@ -192,12 +213,9 @@ int main()
 			window.draw(s);
 		}
 
-
-
-		window.draw(debugText);
+		window.draw(debugText);		
+		window.draw(scoreText);
 		
-		
-
 
 		/////----  
 
