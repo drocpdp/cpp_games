@@ -1,8 +1,11 @@
 #include <SFML/Graphics.hpp>
 #include <time.h>
+#include <stdio.h>
+
 using namespace sf;
 using namespace std;
 
+bool initial = true;
 // uninforced grid limits of playing space
 // M = rows, N = columns
 const int M = 20; 
@@ -10,6 +13,7 @@ const int N = 10;
 // field is 2d array representing each square, initiated with 0
 int field[M][N] = {0};
 
+// each square is 18px
 
 /***
  * 	Point, figures[][], field[][]
@@ -28,6 +32,8 @@ int field[M][N] = {0};
 		6 7
 ***/
 
+
+// each new piece as it falls.
 struct Point
 {int x,y;} a[4], b[4];
 
@@ -44,13 +50,21 @@ int figures[7][4] =
 
 bool check()
 {
-   for (int i=0;i<4;i++)
-	  if (a[i].x<0 || a[i].x>=N || a[i].y>=M) return 0;
-      else if (field[a[i].y][a[i].x]) return 0;
+   for (int i=0;i<4;i++){
+	  	if (a[i].x<0 || a[i].x>=N || a[i].y>=M){ 
+			return 0;
+		}
+      	else if (field[a[i].y][a[i].x]){ 
+			return 0;
+		}
+   }
 
    return 1;
 };
 
+void writeToDebugWindow(Text &debugText, String txt){
+	debugText.setString(txt);	
+}
 
 void debugWriteToWindow(RenderWindow &window, Text &debugText){
 	Vector2<int> windowPosition = window.getPosition();
@@ -63,14 +77,14 @@ void debugWriteToWindow(RenderWindow &window, Text &debugText){
 	int relativeX = mouseX;
 	int relativeY = mouseY;
 	String mousePos =  to_string(relativeX) + " " + to_string(relativeY);
-	debugText.setString(mousePos);
+	writeToDebugWindow(debugText, mousePos);
 };
 
 int main()
 {
     srand(time(0));	 
 
-	RenderWindow window(VideoMode(320, 480), "The Game!");
+	RenderWindow window(VideoMode(320, 480), "Tetris!");
 
     Texture t1;
 	Texture t2;
@@ -78,13 +92,13 @@ int main()
 	t1.loadFromFile("images/tiles.png");
 	t2.loadFromFile("images/background.png");
 	t3.loadFromFile("images/frame.png");
-
 	Sprite s(t1);
 	Sprite background(t2);
 	Sprite frame(t3);
 
     int dx=0; bool rotate=0; int colorNum=1;
 	float timer=0,delay=0.3; 
+
 
 	Clock clock;
 
@@ -96,7 +110,7 @@ int main()
 	debugText.setCharacterSize(30);
 	debugText.setStyle(Text::Bold);
 	debugText.setFillColor(Color::Black);
-	debugText.setPosition(20,410);	
+	debugText.setPosition(20,410);
 
 	///////// ScoreText box ///////////
 	Font scoreFont;
@@ -117,14 +131,21 @@ int main()
         Event e;
         while (window.pollEvent(e))
         {
-            if (e.type == Event::Closed)
-                window.close();
+            if (e.type == Event::Closed){
+				window.close();
+			}
 
 			if (e.type == Event::KeyPressed)
 			{
-			  if (e.key.code==Keyboard::Up) rotate=true;
-			  else if (e.key.code==Keyboard::Left) {dx=-1;}
-			  else if (e.key.code==Keyboard::Right) {dx=1;}
+				if (e.key.code==Keyboard::Up){
+					rotate=true;
+			  	}
+			  	else if (e.key.code==Keyboard::Left){
+					dx-=1;
+			  	}
+			  	else if (e.key.code==Keyboard::Right){
+					dx+=1;
+				}
 			}
 
 			// debug events
@@ -135,11 +156,21 @@ int main()
 			}
 		}
 
-		if (Keyboard::isKeyPressed(Keyboard::Down)) delay=0.05;
+		if (Keyboard::isKeyPressed(Keyboard::Down)){
+			delay=0.05;
+		}
 
 		//// <- Move -> ///
-		for (int i=0;i<4;i++)  { b[i]=a[i]; a[i].x+=dx; }
-		if (!check()) for (int i=0;i<4;i++) a[i]=b[i];
+		for (int i=0;i<4;i++){ 
+			b[i] = a[i]; 
+			a[i].x += dx; 
+		}
+
+		if (!check()){
+			for (int i=0;i<4;i++){ 
+				a[i]=b[i];
+			}
+		}
 
 		//////Rotate//////
 		if (rotate)
@@ -152,41 +183,56 @@ int main()
 				a[i].x = p.x - x;
 				a[i].y = p.y + y;
 			}
-			if (!check()) for (int i=0;i<4;i++) a[i]=b[i];
+			if (!check()){
+				for (int i=0;i<4;i++) {
+					a[i]=b[i];
+				}
+			}
 		}
+
 
 		///////Tick//////
 		if (timer>delay)
 		{
-			for (int i=0;i<4;i++) { b[i]=a[i]; a[i].y+=1; }
-
-			if (!check())
-			{
-			for (int i=0;i<4;i++) field[b[i].y][b[i].x]=colorNum;
-
-			colorNum=1+rand()%7;
-			int n=rand()%7;
-			for (int i=0;i<4;i++)
-			{
-				a[i].x = figures[n][i] % 2;
-				a[i].y = figures[n][i] / 2;
+			for (int i=0;i<4;i++) {
+				b[i]=a[i]; a[i].y+=1; 
 			}
+
+			
+			if (!check())  // new piece now
+			{
+				for (int i=0;i<4;i++){
+					field[b[i].y][b[i].x]=colorNum;
+				}
+
+				colorNum=1+rand()%7;
+				int figIdx=rand()%7;
+				for (int i=0;i<4;i++){
+					// in original tetris pieces fall from middle					
+					a[i].x = figures[figIdx][i] % 2 + (int)(N / 2 - 1); 
+					a[i].y = figures[figIdx][i] / 2;
+				}
 			}
 
 			timer=0;
 		}
 
 		///////check lines//////////
-		int k=M-1;
-		for (int i=M-1;i>0;i--)
+		// iterating through field...
+		int k=M-1; //M = num rows
+		for (int i=M-1;i>0;i--) // reverse iterate rows
 		{
 			int count=0;
-			for (int j=0;j<N;j++)
+			for (int j=0;j<N;j++) // iterate columns
 			{
-				if (field[i][j]) count++;
-				field[k][j]=field[i][j];
+				if (field[i][j]){ 
+					count++;
+				}
+				field[k][j]=field[i][j]; // swap?
 			}
-			if (count<N) k--;
+			if (count<N) { //if count < number of columns
+				k--;
+			}
 		}
 
 		dx=0; rotate=0; delay=0.3;
@@ -194,33 +240,38 @@ int main()
 		/////////draw//////////
 		window.clear(Color::White);	
 		window.draw(background);
-			
-		for (int i=0;i<M;i++)
-		for (int j=0;j<N;j++)
-		{
-			if (field[i][j]==0) continue;
-			s.setTextureRect(IntRect(field[i][j]*18,0,18,18));
-			s.setPosition(j*18,i*18);
-			s.move(28,31); //offset
-			window.draw(s);
-		}
 
-		for (int i=0;i<4;i++)
-		{
-			s.setTextureRect(IntRect(colorNum*18,0,18,18));
-			s.setPosition(a[i].x*18,a[i].y*18);
-			s.move(28,31); //offset
-			window.draw(s);
-		}
+		// for each square in field	
+		for (int i=0;i<M;i++) // row
+			for (int j=0;j<N;j++) // column
+			{
+				if (field[i][j]==0) {
+					continue;
+				}
+				else {
+					s.setTextureRect(IntRect(field[i][j]*18,0,18,18));
+					s.setPosition(j*18,i*18);
+					s.move(28,31); //offset
+					window.draw(s);
+				}
+			}
+
+			for (int i=0;i<4;i++)
+			{
+				s.setTextureRect(IntRect(colorNum*18,0,18,18));
+				s.setPosition(a[i].x*18,a[i].y*18);
+				s.move(28,31); //offset
+				window.draw(s);
+			}
 
 		window.draw(debugText);		
 		window.draw(scoreText);
 		
 
 		/////----  
-
-		window.draw(frame);
+		window.draw(frame);	
 		window.display();
+
 	}
 
 
