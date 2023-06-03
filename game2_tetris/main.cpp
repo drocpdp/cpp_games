@@ -7,11 +7,13 @@ using namespace std;
 
 bool initial = true;
 // uninforced grid limits of playing space
-// M = rows, N = columns
-const int M = 20; 
-const int N = 10;
+// M = rows, colWidth = columns
+const int numRows = 20; 
+const int colWidth = 10;
 // field is 2d array representing each square, initiated with 0
-int field[M][N] = {0};
+int field[numRows][colWidth] = {0};
+
+int scoreTotal = 0;
 
 // each square is 18px
 
@@ -48,14 +50,18 @@ int figures[7][4] =
 	2,3,4,5, // O
 };
 
+/// @brief Check if move/tick/rotate will not extend field.
+/// @param null
+/// @details check called after queued move, rotate, tick(normal fall)
+/// @return true if any point in a[] within bounds and if any point of a[] is not occupied
 bool check()
 {
    for (int i=0;i<4;i++){
-	  	if (a[i].x<0 || a[i].x>=N || a[i].y>=M){ 
-			return 0;
+	  	if (a[i].x<0 || a[i].x>=colWidth || a[i].y>=numRows){ 
+			return 0; //not valid (past bounds of field)
 		}
       	else if (field[a[i].y][a[i].x]){ 
-			return 0;
+			return 0; //not valid (already piece there)
 		}
    }
 
@@ -68,8 +74,6 @@ void writeToDebugWindow(Text &debugText, String txt){
 
 void debugWriteToWindow(RenderWindow &window, Text &debugText){
 	Vector2<int> windowPosition = window.getPosition();
-	int absX = windowPosition.x;
-	int absY = windowPosition.y;
 
 	int mouseX = Mouse::getPosition(window).x;
 	int mouseY = Mouse::getPosition(window).y;
@@ -79,6 +83,12 @@ void debugWriteToWindow(RenderWindow &window, Text &debugText){
 	String mousePos =  to_string(relativeX) + " " + to_string(relativeY);
 	writeToDebugWindow(debugText, mousePos);
 };
+
+void scoreWriteToWindow(RenderWindow &window, Text &debugText, String txt){
+	Vector2<int> windowPosition = window.getPosition();
+	writeToDebugWindow(debugText, txt);	
+
+}
 
 int main()
 {
@@ -117,7 +127,7 @@ int main()
 	scoreFont.loadFromFile("images/Roboto/Roboto-Black.ttf");
 	Text scoreText("",scoreFont);
 	scoreText.setFont(scoreFont);
-	scoreText.setCharacterSize(30);
+	scoreText.setCharacterSize(20);
 	scoreText.setStyle(Text::Bold);
 	scoreText.setFillColor(Color::Black);
 	scoreText.setPosition(200,410);		
@@ -131,6 +141,8 @@ int main()
         Event e;
         while (window.pollEvent(e))
         {
+			scoreWriteToWindow(window, scoreText, "SCORE: " + to_string(scoreTotal));
+			
             if (e.type == Event::Closed){
 				window.close();
 			}
@@ -152,7 +164,6 @@ int main()
 			if (e.type == Event::MouseMoved)
 			{
 				debugWriteToWindow(window, debugText);
-				debugWriteToWindow(window, scoreText);
 			}
 		}
 
@@ -161,11 +172,13 @@ int main()
 		}
 
 		//// <- Move -> ///
+		// queue for move, but not yet...
 		for (int i=0;i<4;i++){ 
 			b[i] = a[i]; 
 			a[i].x += dx; 
 		}
 
+		// if queued move is not valid, re-swap back
 		if (!check()){
 			for (int i=0;i<4;i++){ 
 				a[i]=b[i];
@@ -183,7 +196,7 @@ int main()
 				a[i].x = p.x - x;
 				a[i].y = p.y + y;
 			}
-			if (!check()){
+			if (!check()){ // if rotate not valid, re-swap back
 				for (int i=0;i<4;i++) {
 					a[i]=b[i];
 				}
@@ -194,8 +207,12 @@ int main()
 		///////Tick//////
 		if (timer>delay)
 		{
+			// move each piece y+= 1, (falling)
+
 			for (int i=0;i<4;i++) {
-				b[i]=a[i]; a[i].y+=1; 
+				// swap
+				b[i]=a[i]; //b[i] = old position
+				a[i].y+=1; //a[i] is new position
 			}
 
 			
@@ -205,11 +222,10 @@ int main()
 					field[b[i].y][b[i].x]=colorNum;
 				}
 
-				colorNum=1+rand()%7;
-				int figIdx=rand()%7;
-				for (int i=0;i<4;i++){
-					// in original tetris pieces fall from middle					
-					a[i].x = figures[figIdx][i] % 2 + (int)(N / 2 - 1); 
+				colorNum=1+rand()%7; // color of new piece
+				int figIdx=rand()%7; // shape of new piece
+				for (int i=0;i<4;i++){					
+					a[i].x = figures[figIdx][i] % 2;
 					a[i].y = figures[figIdx][i] / 2;
 				}
 			}
@@ -218,21 +234,31 @@ int main()
 		}
 
 		///////check lines//////////
-		// iterating through field...
-		int k=M-1; //M = num rows
-		for (int i=M-1;i>0;i--) // reverse iterate rows
+		// iterating through field... swapping and also checking for filled rows
+		int k=numRows-1; //numRows = num rows
+		
+		int line_score = 0; 
+		for (int i=numRows-1;i>0;i--) // reverse iterate rows
 		{
 			int count=0;
-			for (int j=0;j<N;j++) // iterate columns
+			for (int j=0;j<colWidth;j++) // iterate columns
 			{
 				if (field[i][j]){ 
 					count++;
 				}
-				field[k][j]=field[i][j]; // swap?
+				field[k][j]=field[i][j]; // swap, although redundant if row not filled.
 			}
-			if (count<N) { //if count < number of columns
+			if (count<colWidth) { //if count < number of columns, if row not filled
 				k--;
 			}
+			else{
+				line_score += 1;
+			}
+		}
+		if (line_score > 0){
+			scoreTotal += (2* line_score);
+			// If a move scores > 1 line, reward multiplicatively
+			scoreWriteToWindow(window, scoreText, "SCORE: " + to_string(scoreTotal));
 		}
 
 		dx=0; rotate=0; delay=0.3;
@@ -242,8 +268,8 @@ int main()
 		window.draw(background);
 
 		// for each square in field	
-		for (int i=0;i<M;i++) // row
-			for (int j=0;j<N;j++) // column
+		for (int i=0;i<numRows;i++) // row
+			for (int j=0;j<colWidth;j++) // column
 			{
 				if (field[i][j]==0) {
 					continue;
