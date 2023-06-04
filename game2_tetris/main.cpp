@@ -1,11 +1,13 @@
 #include <SFML/Graphics.hpp>
 #include <time.h>
 #include <stdio.h>
+#include <chrono>
+#include <thread>
+#include <iostream>
 
 using namespace sf;
 using namespace std;
 
-bool initial = true;
 // uninforced grid limits of playing space
 // M = rows, colWidth = columns
 const int numRows = 20; 
@@ -34,7 +36,6 @@ int scoreTotal = 0;
 		6 7
 ***/
 
-
 // each new piece as it falls.
 struct Point
 {int x,y;} a[4], b[4];
@@ -50,22 +51,37 @@ int figures[7][4] =
 	2,3,4,5, // O
 };
 
+bool gameOver(){
+	for (int i=0; i < colWidth; i++){
+		if (field[0][i]){
+			return true;
+		}
+	}
+	return false;
+}
+
 /// @brief Check if move/tick/rotate will not extend field.
 /// @param null
 /// @details check called after queued move, rotate, tick(normal fall)
 /// @return true if any point in a[] within bounds and if any point of a[] is not occupied
 bool check()
 {
-   for (int i=0;i<4;i++){
-	  	if (a[i].x<0 || a[i].x>=colWidth || a[i].y>=numRows){ 
-			return 0; //not valid (past bounds of field)
-		}
-      	else if (field[a[i].y][a[i].x]){ 
-			return 0; //not valid (already piece there)
-		}
-   }
+	for (int i=0;i<4;i++){
+			if (a[i].x<0 || a[i].x>=colWidth || a[i].y>=numRows){ 
+				return 0; //not valid (past bounds of field)
+			}
+			else if (field[a[i].y][a[i].x]){ 
+				return 0; //not valid (already piece there)
+			}
+			if (b[i].x<0 || b[i].x>=colWidth || b[i].y>=numRows){ 
+				return 0; //not valid (past bounds of field)
+			}
+			else if (field[b[i].y][b[i].x]){ 
+				return 0; //not valid (already piece there)
+			}			
+	}
 
-   return 1;
+	return 1;
 };
 
 void writeToDebugWindow(Text &debugText, String txt){
@@ -138,14 +154,21 @@ int main()
 		clock.restart();
 		timer+=time;
 
+		// GAME OVER CHECK - tiles reached top
+		if (gameOver()){
+			scoreWriteToWindow(window, scoreText, "GAME OVER!!!");
+			cout << "GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
+			return 0;
+		}
+
         Event e;
         while (window.pollEvent(e))
         {
 			scoreWriteToWindow(window, scoreText, "SCORE: " + to_string(scoreTotal));
-			
+
             if (e.type == Event::Closed){
 				window.close();
-			}
+			}			
 
 			if (e.type == Event::KeyPressed)
 			{
@@ -158,13 +181,13 @@ int main()
 			  	else if (e.key.code==Keyboard::Right){
 					dx+=1;
 				}
-			}
+			}		
 
 			// debug events
-			if (e.type == Event::MouseMoved)
-			{
-				debugWriteToWindow(window, debugText);
-			}
+			//if (e.type == Event::MouseMoved)
+			//{
+			//	debugWriteToWindow(window, debugText);
+			//}
 		}
 
 		if (Keyboard::isKeyPressed(Keyboard::Down)){
@@ -180,6 +203,12 @@ int main()
 
 		// if queued move is not valid, re-swap back
 		if (!check()){
+			// GAME OVER CHECK - tiles reached top
+			if (gameOver()){
+				scoreWriteToWindow(window, scoreText, "GAME OVER!!!");
+				cout << "160: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
+				return 0;
+			}			
 			for (int i=0;i<4;i++){ 
 				a[i]=b[i];
 			}
@@ -189,6 +218,7 @@ int main()
 		if (rotate)
 		{
 			Point p = a[1]; //center of rotation
+
 			for (int i=0;i<4;i++)
 			{
 				int x = a[i].y-p.y;
@@ -196,11 +226,18 @@ int main()
 				a[i].x = p.x - x;
 				a[i].y = p.y + y;
 			}
+			
 			if (!check()){ // if rotate not valid, re-swap back
+				// GAME OVER CHECK - tiles reached top
+				if (gameOver()){
+					scoreWriteToWindow(window, scoreText, "GAME OVER!!!");
+					cout << "160: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
+					return 0;
+				}			
 				for (int i=0;i<4;i++) {
 					a[i]=b[i];
 				}
-			}
+			}			
 		}
 
 
@@ -208,26 +245,38 @@ int main()
 		if (timer>delay)
 		{
 			// move each piece y+= 1, (falling)
-
 			for (int i=0;i<4;i++) {
 				// swap
 				b[i]=a[i]; //b[i] = old position
 				a[i].y+=1; //a[i] is new position
-			}
+			}	
 
-			
+			// GAME OVER CHECK - tiles reached top
+			if (gameOver()){
+				scoreWriteToWindow(window, scoreText, "GAME OVER!!!");
+				cout << "160: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
+				return 0;
+			}			
+
 			if (!check())  // new piece now
-			{
+			{				
+				// GAME OVER CHECK - tiles reached top
+				if (gameOver()){
+					scoreWriteToWindow(window, scoreText, "GAME OVER!!!");
+					cout << "160: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
+					return 0;
+				}				
+
 				for (int i=0;i<4;i++){
 					field[b[i].y][b[i].x]=colorNum;
 				}
 
 				colorNum=1+rand()%7; // color of new piece
-				int figIdx=rand()%7; // shape of new piece
+				int figIdx=rand()%7;// shape of new piece
 				for (int i=0;i<4;i++){					
-					a[i].x = figures[figIdx][i] % 2;
+					a[i].x = figures[figIdx][i] % 2 + (colWidth / 2 - 1);
 					a[i].y = figures[figIdx][i] / 2;
-				}
+				}										
 			}
 
 			timer=0;
@@ -238,6 +287,7 @@ int main()
 		int k=numRows-1; //numRows = num rows
 		
 		int line_score = 0; 
+
 		for (int i=numRows-1;i>0;i--) // reverse iterate rows
 		{
 			int count=0;
@@ -255,6 +305,7 @@ int main()
 				line_score += 1;
 			}
 		}
+
 		if (line_score > 0){
 			scoreTotal += (2* line_score);
 			// If a move scores > 1 line, reward multiplicatively
@@ -266,6 +317,13 @@ int main()
 		/////////draw//////////
 		window.clear(Color::White);	
 		window.draw(background);
+
+		// GAME OVER CHECK - tiles reached top
+		if (gameOver()){
+			scoreWriteToWindow(window, scoreText, "GAME OVER!!!");
+			cout << "160: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
+			return 0;
+		}
 
 		// for each square in field	
 		for (int i=0;i<numRows;i++) // row
