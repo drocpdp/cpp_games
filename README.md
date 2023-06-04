@@ -15,3 +15,8 @@ Sandbox/Games using sfml
 * Fix "game over" functionality
 * Fix single block on game opening.
 * Fix issue with pieces overlapping near top of play area.
+
+# Long term:
+
+* AI player 
+* AI testing
