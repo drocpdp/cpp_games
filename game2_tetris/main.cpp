@@ -167,13 +167,6 @@ int main()
 		clock.restart();
 		timer+=time;
 
-		// GAME OVER CHECK - tiles reached top
-		if (gameOver()){
-			scoreWriteToWindow(window, scoreText, "GAME OVER!!!");
-			cout << "163:: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
-			return 0;
-		}
-
         Event e;
         while (window.pollEvent(e))
         {
@@ -215,13 +208,7 @@ int main()
 		}
 
 		// if queued move is not valid, re-swap back
-		if (!check()){
-			// GAME OVER CHECK - tiles reached top
-			if (gameOver()){
-				scoreWriteToWindow(window, scoreText, "GAME OVER!!!");
-				cout << "212:: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
-				return 0;
-			}			
+		if (!check()){	
 			for (int i=0;i<4;i++){ 
 				a[i]=b[i];
 			}
@@ -241,12 +228,6 @@ int main()
 			}
 			
 			if (!check()){ // if rotate not valid, re-swap back
-				// GAME OVER CHECK - tiles reached top
-				if (gameOver()){
-					scoreWriteToWindow(window, scoreText, "GAME OVER!!!");
-					cout << "237:: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
-					return 0;
-				}			
 				for (int i=0;i<4;i++) {
 					a[i]=b[i];
 				}
@@ -264,22 +245,9 @@ int main()
 				a[i].y+=1; //a[i] is new position
 			}
 
-			// GAME OVER CHECK - tiles reached top
-			if (gameOver()){
-				scoreWriteToWindow(window, scoreText, "GAME OVER!!!");
-				cout << "278: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
-				return 0;
-			}			
 
 			if (!check())  // new piece now
 			{				
-				// GAME OVER CHECK - tiles reached top
-				if (gameOver()){
-					scoreWriteToWindow(window, scoreText, "GAME OVER!!!");
-					cout << "287: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
-					return 0;
-				}				
-
 				for (int i=0;i<4;i++){
 					field[b[i].y][b[i].x]=colorNum;
 				}	
