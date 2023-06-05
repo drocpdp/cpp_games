@@ -72,13 +72,7 @@ bool check()
 			}
 			else if (field[a[i].y][a[i].x]){ 
 				return 0; //not valid (already piece there)
-			}
-			if (b[i].x<0 || b[i].x>=colWidth || b[i].y>=numRows){ 
-				return 0; //not valid (past bounds of field)
-			}
-			else if (field[b[i].y][b[i].x]){ 
-				return 0; //not valid (already piece there)
-			}			
+			}	
 	}
 
 	return 1;
@@ -106,6 +100,16 @@ void scoreWriteToWindow(RenderWindow &window, Text &debugText, String txt){
 
 }
 
+void pendingPieceBox(RenderWindow &window){
+	RectangleShape rect;
+	rect.setSize(sf::Vector2f(50,80));
+	rect.setOutlineColor(sf::Color::Green);
+	rect.setOutlineThickness(10);
+	rect.setFillColor(sf::Color::White);	
+	rect.setPosition(250,50);
+	window.draw(rect);
+}
+
 int main()
 {
     srand(time(0));	 
@@ -122,9 +126,10 @@ int main()
 	Sprite background(t2);
 	Sprite frame(t3);
 
-    int dx=0; bool rotate=0; int colorNum=1;
-	float timer=0,delay=0.3; 
-
+    int dx=0; 
+	bool rotate=false; 
+	int colorNum=1;
+	float timer=0,delay=0.3;
 
 	Clock clock;
 
@@ -148,6 +153,14 @@ int main()
 	scoreText.setFillColor(Color::Black);
 	scoreText.setPosition(200,410);		
 
+	// initial shape 
+	colorNum=1+rand()%7; // color of new piece
+	int figIdx=rand()%7;// shape of new piece
+	for (int i=0;i<4;i++){					
+		a[i].x = figures[figIdx][i] % 2 + (colWidth / 2 - 1);
+		a[i].y = figures[figIdx][i] / 2;
+	}		
+
     while (window.isOpen())
     {
 		float time = clock.getElapsedTime().asSeconds();
@@ -157,7 +170,7 @@ int main()
 		// GAME OVER CHECK - tiles reached top
 		if (gameOver()){
 			scoreWriteToWindow(window, scoreText, "GAME OVER!!!");
-			cout << "GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
+			cout << "163:: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
 			return 0;
 		}
 
@@ -206,7 +219,7 @@ int main()
 			// GAME OVER CHECK - tiles reached top
 			if (gameOver()){
 				scoreWriteToWindow(window, scoreText, "GAME OVER!!!");
-				cout << "160: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
+				cout << "212:: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
 				return 0;
 			}			
 			for (int i=0;i<4;i++){ 
@@ -231,7 +244,7 @@ int main()
 				// GAME OVER CHECK - tiles reached top
 				if (gameOver()){
 					scoreWriteToWindow(window, scoreText, "GAME OVER!!!");
-					cout << "160: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
+					cout << "237:: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
 					return 0;
 				}			
 				for (int i=0;i<4;i++) {
@@ -249,12 +262,12 @@ int main()
 				// swap
 				b[i]=a[i]; //b[i] = old position
 				a[i].y+=1; //a[i] is new position
-			}	
+			}
 
 			// GAME OVER CHECK - tiles reached top
 			if (gameOver()){
 				scoreWriteToWindow(window, scoreText, "GAME OVER!!!");
-				cout << "160: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
+				cout << "278: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
 				return 0;
 			}			
 
@@ -263,13 +276,16 @@ int main()
 				// GAME OVER CHECK - tiles reached top
 				if (gameOver()){
 					scoreWriteToWindow(window, scoreText, "GAME OVER!!!");
-					cout << "160: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
+					cout << "287: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
 					return 0;
 				}				
 
 				for (int i=0;i<4;i++){
 					field[b[i].y][b[i].x]=colorNum;
-				}
+				}	
+
+				// TO DO : assign a[...] = pending piece
+				// TO DO : assign new pending piece
 
 				colorNum=1+rand()%7; // color of new piece
 				int figIdx=rand()%7;// shape of new piece
@@ -350,7 +366,7 @@ int main()
 
 		window.draw(debugText);		
 		window.draw(scoreText);
-		
+		pendingPieceBox(window);
 
 		/////----  
 		window.draw(frame);	

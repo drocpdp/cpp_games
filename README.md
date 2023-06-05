@@ -4,6 +4,7 @@ Sandbox/Games using sfml
 
 # Issues Fixed
 
+* Fix single block on game opening (a[] array wasn't initialized).
 * Pieces start falling in middle as per original game.
 * Added scoring system and display.
 * Added a "game over" functionality.
@@ -13,7 +14,6 @@ Sandbox/Games using sfml
 
 * "Pending" piece (player can see next piece).
 * Fix "game over" functionality
-* Fix single block on game opening.
 * Fix issue with pieces overlapping near top of play area.
 
 # Long term:
