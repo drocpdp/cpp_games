@@ -17,6 +17,9 @@ int field[numRows][colWidth] = {0};
 
 int scoreTotal = 0;
 
+int figIdx=rand()%7;// shape of new piece
+int colorNum=1+rand()%7; // color of new piece
+
 // each square is 18px
 
 /***
@@ -102,9 +105,9 @@ void scoreWriteToWindow(RenderWindow &window, Text &debugText, String txt){
 
 void pendingPieceBox(RenderWindow &window){
 	RectangleShape rect;
-	rect.setSize(sf::Vector2f(50,80));
+	rect.setSize(sf::Vector2f(55,85));
 	rect.setOutlineColor(sf::Color::Green);
-	rect.setOutlineThickness(10);
+	rect.setOutlineThickness(5);
 	rect.setFillColor(sf::Color::White);	
 	rect.setPosition(250,50);
 	window.draw(rect);
@@ -155,7 +158,7 @@ int main()
 
 	// initial shape 
 	colorNum=1+rand()%7; // color of new piece
-	int figIdx=rand()%7;// shape of new piece
+	figIdx=rand()%7;// shape of new piece
 	for (int i=0;i<4;i++){					
 		a[i].x = figures[figIdx][i] % 2 + (colWidth / 2 - 1);
 		a[i].y = figures[figIdx][i] / 2;
@@ -245,7 +248,6 @@ int main()
 				a[i].y+=1; //a[i] is new position
 			}
 
-
 			if (!check())  // new piece now
 			{				
 				for (int i=0;i<4;i++){
@@ -256,7 +258,7 @@ int main()
 				// TO DO : assign new pending piece
 
 				colorNum=1+rand()%7; // color of new piece
-				int figIdx=rand()%7;// shape of new piece
+				figIdx=rand()%7;// shape of new piece
 				for (int i=0;i<4;i++){					
 					a[i].x = figures[figIdx][i] % 2 + (colWidth / 2 - 1);
 					a[i].y = figures[figIdx][i] / 2;
@@ -335,6 +337,17 @@ int main()
 		window.draw(debugText);		
 		window.draw(scoreText);
 		pendingPieceBox(window);
+
+		// Pending Piece
+		Sprite nxt(t1);
+		nxt.setTexture(t1);
+		nxt.setTextureRect(IntRect(colorNum*18,0,18,18));					
+		for (int i=0; i<4; i++){
+			int xxx = (figures[figIdx][i] % 2) * 18;
+			int yyy = (figures[figIdx][i] / 2) * 18;
+			nxt.setPosition(xxx+255,yyy+50);
+			window.draw(nxt);
+		}	
 
 		/////----  
 		window.draw(frame);	
