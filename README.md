@@ -9,10 +9,10 @@ Sandbox/Games using sfml
 * Added scoring system and display.
 * Added a "game over" functionality.
 * Added "debug" box for initial testing of coordinates.
+* "Pending" piece functionality added (Player can see upcoming piece)
 
 # To Do:
 
-* "Pending" piece (player can see next piece).
 * Fix "game over" functionality
 * Fix issue with pieces overlapping near top of play area.
 

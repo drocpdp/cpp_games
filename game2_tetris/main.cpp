@@ -4,6 +4,7 @@
 #include <chrono>
 #include <thread>
 #include <iostream>
+#include <vector>
 
 using namespace sf;
 using namespace std;
@@ -136,6 +137,9 @@ int main()
 
 	Clock clock;
 
+	// pending/current pieces (implemented like a stack)
+	vector<vector<int>> piecesStack;	
+
 	///////// DebugText box ///////////
 	Font debugFont;
 	debugFont.loadFromFile("images/Roboto/Roboto-Black.ttf");
@@ -156,9 +160,15 @@ int main()
 	scoreText.setFillColor(Color::Black);
 	scoreText.setPosition(200,410);		
 
-	// initial shape 
+	// initial shape
 	colorNum=1+rand()%7; // color of new piece
 	figIdx=rand()%7;// shape of new piece
+
+	// store a pending piece
+	int nxtcolorNum=1+rand()%7; // color of new piece
+	int nxtfigIdx=rand()%7;// shape of new piece
+	piecesStack.push_back({nxtcolorNum, nxtfigIdx});
+	
 	for (int i=0;i<4;i++){					
 		a[i].x = figures[figIdx][i] % 2 + (colWidth / 2 - 1);
 		a[i].y = figures[figIdx][i] / 2;
@@ -254,11 +264,14 @@ int main()
 					field[b[i].y][b[i].x]=colorNum;
 				}	
 
-				// TO DO : assign a[...] = pending piece
-				// TO DO : assign new pending piece
+				colorNum = piecesStack[piecesStack.size()-1][0];
+				figIdx = piecesStack[piecesStack.size()-1][1];
+				piecesStack.pop_back();
 
-				colorNum=1+rand()%7; // color of new piece
-				figIdx=rand()%7;// shape of new piece
+				nxtcolorNum=1+rand()%7; // color of new piece
+				nxtfigIdx=rand()%7;// shape of new piece
+				piecesStack.push_back({nxtcolorNum, nxtfigIdx});
+
 				for (int i=0;i<4;i++){					
 					a[i].x = figures[figIdx][i] % 2 + (colWidth / 2 - 1);
 					a[i].y = figures[figIdx][i] / 2;
@@ -339,12 +352,22 @@ int main()
 		pendingPieceBox(window);
 
 		// Pending Piece
+		
+		int pendingIdx = 0;
+		if (piecesStack.size() > 1){
+			pendingIdx =  piecesStack.size()-2;
+		}
+		else{
+			pendingIdx = piecesStack.size() - 1;
+		}
+		int prevColorNum = piecesStack[pendingIdx][0];
+		int prevFigIdx = piecesStack[pendingIdx][1];
 		Sprite nxt(t1);
 		nxt.setTexture(t1);
-		nxt.setTextureRect(IntRect(colorNum*18,0,18,18));					
+		nxt.setTextureRect(IntRect(prevColorNum*18,0,18,18));					
 		for (int i=0; i<4; i++){
-			int xxx = (figures[figIdx][i] % 2) * 18;
-			int yyy = (figures[figIdx][i] / 2) * 18;
+			int xxx = (figures[prevFigIdx][i] % 2) * 18;
+			int yyy = (figures[prevFigIdx][i] / 2) * 18;
 			nxt.setPosition(xxx+255,yyy+50);
 			window.draw(nxt);
 		}	
