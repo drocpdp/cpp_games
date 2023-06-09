@@ -4,6 +4,7 @@
 #include <chrono>
 #include <thread>
 #include <iostream>
+#include <vector>
 
 using namespace sf;
 using namespace std;
@@ -16,6 +17,9 @@ const int colWidth = 10;
 int field[numRows][colWidth] = {0};
 
 int scoreTotal = 0;
+
+int figIdx=rand()%7;// shape of new piece
+int colorNum=1+rand()%7; // color of new piece
 
 // each square is 18px
 
@@ -72,13 +76,7 @@ bool check()
 			}
 			else if (field[a[i].y][a[i].x]){ 
 				return 0; //not valid (already piece there)
-			}
-			if (b[i].x<0 || b[i].x>=colWidth || b[i].y>=numRows){ 
-				return 0; //not valid (past bounds of field)
-			}
-			else if (field[b[i].y][b[i].x]){ 
-				return 0; //not valid (already piece there)
-			}			
+			}	
 	}
 
 	return 1;
@@ -106,6 +104,16 @@ void scoreWriteToWindow(RenderWindow &window, Text &debugText, String txt){
 
 }
 
+void pendingPieceBox(RenderWindow &window){
+	RectangleShape rect;
+	rect.setSize(sf::Vector2f(55,85));
+	rect.setOutlineColor(sf::Color::Green);
+	rect.setOutlineThickness(5);
+	rect.setFillColor(sf::Color::White);	
+	rect.setPosition(250,50);
+	window.draw(rect);
+}
+
 int main()
 {
     srand(time(0));	 
@@ -122,11 +130,15 @@ int main()
 	Sprite background(t2);
 	Sprite frame(t3);
 
-    int dx=0; bool rotate=0; int colorNum=1;
-	float timer=0,delay=0.3; 
-
+    int dx=0; 
+	bool rotate=false; 
+	int colorNum=1;
+	float timer=0,delay=0.3;
 
 	Clock clock;
+
+	// pending/current pieces (implemented like a stack)
+	vector<vector<int>> piecesStack;	
 
 	///////// DebugText box ///////////
 	Font debugFont;
@@ -148,18 +160,25 @@ int main()
 	scoreText.setFillColor(Color::Black);
 	scoreText.setPosition(200,410);		
 
+	// initial shape
+	colorNum=1+rand()%7; // color of new piece
+	figIdx=rand()%7;// shape of new piece
+
+	// store a pending piece
+	int nxtcolorNum=1+rand()%7; // color of new piece
+	int nxtfigIdx=rand()%7;// shape of new piece
+	piecesStack.push_back({nxtcolorNum, nxtfigIdx});
+	
+	for (int i=0;i<4;i++){					
+		a[i].x = figures[figIdx][i] % 2 + (colWidth / 2 - 1);
+		a[i].y = figures[figIdx][i] / 2;
+	}		
+
     while (window.isOpen())
     {
 		float time = clock.getElapsedTime().asSeconds();
 		clock.restart();
 		timer+=time;
-
-		// GAME OVER CHECK - tiles reached top
-		if (gameOver()){
-			scoreWriteToWindow(window, scoreText, "GAME OVER!!!");
-			cout << "GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
-			return 0;
-		}
 
         Event e;
         while (window.pollEvent(e))
@@ -202,13 +221,7 @@ int main()
 		}
 
 		// if queued move is not valid, re-swap back
-		if (!check()){
-			// GAME OVER CHECK - tiles reached top
-			if (gameOver()){
-				scoreWriteToWindow(window, scoreText, "GAME OVER!!!");
-				cout << "160: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
-				return 0;
-			}			
+		if (!check()){	
 			for (int i=0;i<4;i++){ 
 				a[i]=b[i];
 			}
@@ -228,12 +241,6 @@ int main()
 			}
 			
 			if (!check()){ // if rotate not valid, re-swap back
-				// GAME OVER CHECK - tiles reached top
-				if (gameOver()){
-					scoreWriteToWindow(window, scoreText, "GAME OVER!!!");
-					cout << "160: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
-					return 0;
-				}			
 				for (int i=0;i<4;i++) {
 					a[i]=b[i];
 				}
@@ -249,30 +256,22 @@ int main()
 				// swap
 				b[i]=a[i]; //b[i] = old position
 				a[i].y+=1; //a[i] is new position
-			}	
-
-			// GAME OVER CHECK - tiles reached top
-			if (gameOver()){
-				scoreWriteToWindow(window, scoreText, "GAME OVER!!!");
-				cout << "160: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
-				return 0;
-			}			
+			}
 
 			if (!check())  // new piece now
 			{				
-				// GAME OVER CHECK - tiles reached top
-				if (gameOver()){
-					scoreWriteToWindow(window, scoreText, "GAME OVER!!!");
-					cout << "160: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
-					return 0;
-				}				
-
 				for (int i=0;i<4;i++){
 					field[b[i].y][b[i].x]=colorNum;
-				}
+				}	
 
-				colorNum=1+rand()%7; // color of new piece
-				int figIdx=rand()%7;// shape of new piece
+				colorNum = piecesStack[piecesStack.size()-1][0];
+				figIdx = piecesStack[piecesStack.size()-1][1];
+				piecesStack.pop_back();
+
+				nxtcolorNum=1+rand()%7; // color of new piece
+				nxtfigIdx=rand()%7;// shape of new piece
+				piecesStack.push_back({nxtcolorNum, nxtfigIdx});
+
 				for (int i=0;i<4;i++){					
 					a[i].x = figures[figIdx][i] % 2 + (colWidth / 2 - 1);
 					a[i].y = figures[figIdx][i] / 2;
@@ -350,7 +349,28 @@ int main()
 
 		window.draw(debugText);		
 		window.draw(scoreText);
+		pendingPieceBox(window);
+
+		// Pending Piece
 		
+		int pendingIdx = 0;
+		if (piecesStack.size() > 1){
+			pendingIdx =  piecesStack.size()-2;
+		}
+		else{
+			pendingIdx = piecesStack.size() - 1;
+		}
+		int prevColorNum = piecesStack[pendingIdx][0];
+		int prevFigIdx = piecesStack[pendingIdx][1];
+		Sprite nxt(t1);
+		nxt.setTexture(t1);
+		nxt.setTextureRect(IntRect(prevColorNum*18,0,18,18));					
+		for (int i=0; i<4; i++){
+			int xxx = (figures[prevFigIdx][i] % 2) * 18;
+			int yyy = (figures[prevFigIdx][i] / 2) * 18;
+			nxt.setPosition(xxx+255,yyy+50);
+			window.draw(nxt);
+		}	
 
 		/////----  
 		window.draw(frame);	
