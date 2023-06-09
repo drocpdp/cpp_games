@@ -16,6 +16,8 @@ Sandbox/Games using sfml
 
 * Fix "game over" functionality
 * Fix issue with pieces overlapping near top of play area.
+* Seamless "Restart game" functionality.
+* Score record and possibly for AI usage, piece sequence record.
 
 ## Long term:
 
