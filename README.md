@@ -11,10 +11,11 @@ Sandbox/Games using sfml
 * Added a "game over" functionality.
 * Added "debug" box for initial testing of coordinates.
 * "Pending" piece functionality added (Player can see upcoming piece)
+* Added "Game Over" overlay, small delay, and proper exit of game.
 
 ## To Do:
 
-* Fix "game over" functionality
+* Fix "game over" functionality (more precise)
 * Fix issue with pieces overlapping near top of play area.
 * Seamless "Restart game" functionality.
 * Score record and possibly for AI usage, piece sequence record.
