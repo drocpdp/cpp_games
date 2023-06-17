@@ -1,4 +1,5 @@
 #include <SFML/Graphics.hpp>
+#include <SFML/System.hpp>
 #include <time.h>
 #include <stdio.h>
 #include <chrono>
@@ -114,6 +115,43 @@ void pendingPieceBox(RenderWindow &window){
 	window.draw(rect);
 }
 
+void gameOverBox(RenderWindow &window, int score){
+	sf::RectangleShape fadeOverlay(sf::Vector2f(window.getSize().x, window.getSize().y));
+	fadeOverlay.setFillColor(sf::Color(0, 0, 0, 128));
+	window.draw(fadeOverlay);
+
+	sf::RectangleShape gameOverRect;
+	gameOverRect.setSize(sf::Vector2f(200, 200));
+	gameOverRect.setOutlineColor(sf::Color::Red);
+	gameOverRect.setOutlineThickness(15);
+	gameOverRect.setFillColor(sf::Color::White);
+	gameOverRect.setPosition(50, 50);
+	window.draw(gameOverRect);
+
+	sf::Font debugFont;
+	debugFont.loadFromFile("images/Roboto/Roboto-Black.ttf");
+
+	sf::Sprite gameOverSprite;
+	Texture gameOverTexture;
+	gameOverTexture.loadFromFile("./images/game_over.png");
+	gameOverSprite.setTexture(gameOverTexture);
+	gameOverSprite.setPosition(60,60);
+	gameOverSprite.setScale(0.3,0.3);
+	gameOverSprite.setColor(Color::White);
+	window.draw(gameOverSprite);
+
+	sf::Text gameOverText("", debugFont);
+	gameOverText.setFont(debugFont);
+	gameOverText.setCharacterSize(35);
+	gameOverText.setStyle(sf::Text::Bold);
+	gameOverText.setFillColor(sf::Color::Red);
+	gameOverText.setPosition(75, 200);
+	gameOverText.setString("Score: " + std::to_string(score));
+	window.draw(gameOverText);
+
+	window.display();
+}
+
 int main()
 {
     srand(time(0));	 
@@ -180,9 +218,11 @@ int main()
 		clock.restart();
 		timer+=time;
 
-        Event e;
+        Event e;		
+
         while (window.pollEvent(e))
         {
+
 			scoreWriteToWindow(window, scoreText, "SCORE: " + to_string(scoreTotal));
 
             if (e.type == Event::Closed){
@@ -303,7 +343,8 @@ int main()
 			else{
 				line_score += 1;
 			}
-		}
+		}	
+
 
 		if (line_score > 0){
 			scoreTotal += (2* line_score);
@@ -311,18 +352,19 @@ int main()
 			scoreWriteToWindow(window, scoreText, "SCORE: " + to_string(scoreTotal));
 		}
 
+		// GAME OVER CHECK - tiles reached top
+		if (gameOver()){
+			scoreWriteToWindow(window, scoreText, "GAME OVER!!!");
+			gameOverBox(window, scoreTotal);
+			sleep(seconds(5));
+			return 0;
+		}							
+
 		dx=0; rotate=0; delay=0.3;
 
 		/////////draw//////////
 		window.clear(Color::White);	
 		window.draw(background);
-
-		// GAME OVER CHECK - tiles reached top
-		if (gameOver()){
-			scoreWriteToWindow(window, scoreText, "GAME OVER!!!");
-			cout << "160: GAME OVER! YOURE SCORE WAS " << to_string(scoreTotal)<< endl;
-			return 0;
-		}
 
 		// for each square in field	
 		for (int i=0;i<numRows;i++) // row
@@ -370,15 +412,13 @@ int main()
 			int yyy = (figures[prevFigIdx][i] / 2) * 18;
 			nxt.setPosition(xxx+255,yyy+50);
 			window.draw(nxt);
-		}	
+		}			
 
 		/////----  
 		window.draw(frame);	
 		window.display();
 
 	}
-
-
 
     return 0;
 }
